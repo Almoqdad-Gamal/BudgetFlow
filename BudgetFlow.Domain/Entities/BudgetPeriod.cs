@@ -12,7 +12,7 @@ namespace BudgetFlow.Domain.Entities
         public Guid TenantId { get; set; }
         public Tenant Tenant { get; set; } = null!;
 
-        public int DepartmentId { get; set; }
+        public Guid DepartmentId { get; set; }
         public Department Department { get; set; } = null!;
 
         // Not saved in DB
