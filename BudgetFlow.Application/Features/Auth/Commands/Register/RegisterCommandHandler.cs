@@ -19,8 +19,9 @@ namespace BudgetFlow.Application.Features.Auth.Commands.Register
 
         public async Task<RegisterResult> Handle(RegisterCommand request, CancellationToken cancellationToken)
         {
-            var subdomainExists = await _context.Tenants.AnyAsync(t => t.Subdomain == request.Subdomain, cancellationToken);
-
+            var subdomainExists = await _context.Tenants
+                .Where(t => t.Subdomain == request.Subdomain)
+                .FirstOrDefaultAsync(cancellationToken) !=null;
             if(subdomainExists)
                 throw new ValidationException([new FluentValidation.Results.ValidationFailure(
                     "Subdomain", "This subdomain is already taken."
@@ -46,9 +47,14 @@ namespace BudgetFlow.Application.Features.Auth.Commands.Register
                 IsActive = true
             };
 
+            _context.Tenants.Add(tenant);
             _context.Users.Add(user);
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            // Clear the change tracker to ensure subsequent reads hit the database
+            if (_context is DbContext dbContext)
+                dbContext.ChangeTracker.Clear();
 
             var token = _jwtService.GenerateToken(user);
             var refreshToken = _jwtService.GenerateRefreshToken();

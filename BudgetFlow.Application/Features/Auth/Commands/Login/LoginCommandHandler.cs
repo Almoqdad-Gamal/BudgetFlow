@@ -19,7 +19,8 @@ namespace BudgetFlow.Application.Features.Auth.Commands.Login
         public async Task<LoginResult> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
             var tenant = await _context.Tenants
-                .FirstOrDefaultAsync(t => t.Subdomain == request.Subdomain && t.IsActive, cancellationToken);
+                .Where(t => t.Subdomain == request.Subdomain && t.IsActive)
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (tenant is null)
                 throw new NotFoundException("Tenant", request.Subdomain);
