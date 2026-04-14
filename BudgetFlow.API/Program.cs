@@ -1,4 +1,7 @@
+using BudgetFlow.API.Middleware;
+using BudgetFlow.API.Services;
 using BudgetFlow.Application;
+using BudgetFlow.Application.Common.Interfaces;
 using BudgetFlow.Infrastructure.Extentions;
 using Scalar.AspNetCore;
 
@@ -7,9 +10,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddOpenApi();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 var app = builder.Build();
 
@@ -25,6 +31,8 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
