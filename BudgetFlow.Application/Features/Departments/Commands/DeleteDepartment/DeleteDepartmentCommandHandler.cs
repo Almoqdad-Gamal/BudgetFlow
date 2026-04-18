@@ -30,8 +30,11 @@ namespace BudgetFlow.Application.Features.Departments.Commands.DeleteDepartment
             var hasExpenses = await _context.Expenses
                 .AnyAsync(e => e.DepartmentId == request.Id, cancellationToken);
 
-            if(hasExpenses)
-                throw new ForbiddenException("Cannot delete a department that has expenses. Please delete all expenses first.");
+            var hasBudgetPeriods = await _context.BudgetPeriods
+                .AnyAsync(b => b.DepartmentId == request.Id, cancellationToken);
+
+            if(hasExpenses || hasBudgetPeriods)
+                throw new ForbiddenException("Cannot delete a department that has expenses or budget periods." + "Please delete all related data first.");
 
             _context.Departments.Remove(department);
             await _context.SaveChangesAsync(cancellationToken);

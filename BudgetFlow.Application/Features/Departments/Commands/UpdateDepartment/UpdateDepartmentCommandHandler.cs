@@ -42,7 +42,6 @@ namespace BudgetFlow.Application.Features.Departments.Commands.UpdateDepartment
             department.Name = request.Name;
             department.BudgetLimit = request.BudgetLimit;
             department.Currency = request.Currency;
-            department.UpdatedAt = DateTime.UtcNow;
 
             _context.Departments.Update(department);
             await _context.SaveChangesAsync(cancellationToken);
