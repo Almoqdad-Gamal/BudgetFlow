@@ -1,0 +1,85 @@
+using BudgetFlow.Application.Common.Exceptions;
+using BudgetFlow.Application.Common.Interfaces;
+using BudgetFlow.Domain.Enums;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+
+namespace BudgetFlow.Application.Features.Expenses.Commands.ReviewExpense
+{
+    public class ReviewExpenseCommandHandler : IRequestHandler<ReviewExpenseCommand, ReviewExpenseResponse>
+    {
+        private readonly IApplicationDbContext _context;
+        private readonly ICurrentUserService _currentUserService;
+        public ReviewExpenseCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
+        {
+            _context = context;
+            _currentUserService = currentUserService;
+        }
+
+        public async Task<ReviewExpenseResponse> Handle(ReviewExpenseCommand request, CancellationToken cancellationToken)
+        {
+            var tenantId = _currentUserService.TenantId;
+            var reviewerId = _currentUserService.UserId;
+            var role = _currentUserService.Role;
+
+            var expense = await _context.Expenses.FirstOrDefaultAsync(e => e.Id == request.ExpenseId && e.TenantId == tenantId, cancellationToken);
+
+            if(expense is null)
+                throw new NotFoundException("Expense", request.ExpenseId);
+
+            if(role == "Manager" && expense.Status != ExpenseStatus.Pending)
+                throw new ForbiddenException("This expense is not pending manager review.");
+
+            if (role == "Finance" && expense.Status != ExpenseStatus.ApprovedByManager)
+                throw new ForbiddenException("This expense must be approved by a manager first.");
+
+            // Determining the new status based on the role and decision
+            expense.Status = (role, request.IsApproved) switch
+            {
+                ("Manager", true) => ExpenseStatus.ApprovedByManager,
+                ("Manager", false) => ExpenseStatus.RejectedBuManager,
+                ("Finance", true) => ExpenseStatus.ApprovedByFinance,
+                ("Finance", false) => ExpenseStatus.RejectedByFinance,
+                _ => throw new ForbiddenException("Only Managers and Finance can review expense.")
+            };
+
+            expense.ReviewedByUserId = reviewerId;
+            expense.ReviewedAt = DateTime.UtcNow;
+
+            if(!request.IsApproved)
+                expense.RejectionReason = request.RejectedReason;
+            
+            // If the Finance approves, update the BudgetPeriod
+            if (role == "Finance" && request.IsApproved)
+                await UpdateBudgetPeriodAsync(expense, cancellationToken);
+
+            _context.Expenses.Update(expense);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return new ReviewExpenseResponse
+            (
+                expense.Id,
+                expense.Status.ToString()
+            );
+        }
+
+        private async Task UpdateBudgetPeriodAsync(Domain.Entities.Expense expense, CancellationToken cancellationToken)
+        {
+            var now = DateTime.UtcNow;
+
+            var budgetPeriod = await _context.BudgetPeriods
+                .FirstOrDefaultAsync(b =>
+                    b.DepartmentId == expense.DepartmentId &&
+                    b.TenantId == expense.TenantId &&
+                    b.Month == now.Month &&
+                    b.Year == now.Year,
+                    cancellationToken);
+
+            if(budgetPeriod is not null)
+            {
+                budgetPeriod.SpentAmount += expense.AmountInBaseCurrency;
+                _context.BudgetPeriods.Update(budgetPeriod);
+            }
+        }
+    }
+}
