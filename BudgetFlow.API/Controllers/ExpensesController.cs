@@ -26,10 +26,11 @@ namespace BudgetFlow.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetExpenses([FromQuery] Guid? departmentId, [FromQuery] string? status, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetExpenses([FromQuery] Guid? departmentId, [FromQuery] string? status,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken cancellationToken = default)
         {
             var result = await _sender.Send(
-                new GetExpensesQuery(departmentId, status),
+                new GetExpensesQuery(departmentId, status, page, pageSize),
                 cancellationToken
             );
             return Ok(result);

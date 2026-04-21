@@ -1,4 +1,5 @@
 using BudgetFlow.Application.Common.Interfaces;
+using BudgetFlow.Application.Common.Models;
 using BudgetFlow.Application.Features.Expenses.DTOs;
 using BudgetFlow.Domain.Enums;
 using MediatR;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BudgetFlow.Application.Features.Expenses.Queries.GetExpenses
 {
-    public class GetExpensesQueryHandler : IRequestHandler<GetExpensesQuery, List<ExpenseDto>>
+    public class GetExpensesQueryHandler : IRequestHandler<GetExpensesQuery, PagedResult<ExpenseDto>>
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
@@ -17,15 +18,21 @@ namespace BudgetFlow.Application.Features.Expenses.Queries.GetExpenses
             _currentUserService = currentUserService;
         }
 
-        public async Task<List<ExpenseDto>> Handle(GetExpensesQuery request, CancellationToken cancellationToken)
+        public async Task<PagedResult<ExpenseDto>> Handle(GetExpensesQuery request, CancellationToken cancellationToken)
         {
             var tenantId = _currentUserService.TenantId;
+            var role = _currentUserService.Role;
+            var userId = _currentUserService.UserId;
 
             var query = _context.Expenses
                 .Include(e => e.CreatedByUser)
                 .Include(e => e.Department)
                 .Where(e => e.TenantId == tenantId)
                 .AsQueryable();
+
+            // The Employee sees his his own expenses
+            if (role == "Employee")
+                query = query.Where(e => e.CreatedByUserId == userId);
 
             // Filter by department if it submitted in the request
             if (request.DepartmentId.HasValue)
@@ -36,10 +43,14 @@ namespace BudgetFlow.Application.Features.Expenses.Queries.GetExpenses
                 Enum.TryParse<ExpenseStatus>(request.Status, out var status))
                 query = query.Where(e => e.Status == status);
 
-            return await query
+            // Total count of records before pagination
+            var totalCount = await query.CountAsync(cancellationToken);
+
+            var items = await query
                 .OrderByDescending(e => e.CreatedAt)
-                .Select(e => new ExpenseDto 
-                (
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .Select(e => new ExpenseDto(
                     e.Id,
                     e.Title,
                     e.Amount,
@@ -50,6 +61,14 @@ namespace BudgetFlow.Application.Features.Expenses.Queries.GetExpenses
                     e.Department.Name,
                     e.CreatedAt
                 )).ToListAsync(cancellationToken);
+
+            return new PagedResult<ExpenseDto>(
+                items,
+                totalCount,
+                request.Page,
+                request.PageSize,
+                (int)Math.Ceiling(totalCount / (double)request.PageSize)
+            );
         }
     }
 }
