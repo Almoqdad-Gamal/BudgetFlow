@@ -53,6 +53,14 @@ namespace BudgetFlow.Infrastructure.Extentions
                 };
             });
 
+            // Currency Settings
+            services.Configure<CurrencySettings>(
+                configuration.GetSection("CurrencySettings")
+            );
+
+            // Currency Service
+            services.AddHttpClient<ICurrencyService, CurrencyService>();
+
 
 
             return services;

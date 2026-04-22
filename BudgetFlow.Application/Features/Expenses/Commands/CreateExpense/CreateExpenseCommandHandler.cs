@@ -11,11 +11,13 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.CreateExpense
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
+        private readonly ICurrencyService _currencyService;
 
-        public CreateExpenseCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
+        public CreateExpenseCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService, ICurrencyService currencyService)
         {
             _context = context;
             _currentUserService = currentUserService;
+            _currencyService = currencyService;
         }
 
         public async Task<CreateExpenseResult> Handle(CreateExpenseCommand request, CancellationToken cancellationToken)
@@ -29,7 +31,11 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.CreateExpense
             if(department is null)
                 throw new NotFoundException("Department", request.DepartmentId);
 
-            var amountInBase = request.Currency == "USD" ? request.Amount : request.Amount;
+            var amountInBase = await _currencyService.ConvertAsync(
+                request.Amount,
+                request.Currency,
+                "USD"
+            );
 
             var expense = new Expense
             {
