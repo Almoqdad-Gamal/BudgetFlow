@@ -61,6 +61,9 @@ namespace BudgetFlow.Infrastructure.Extentions
             // Currency Service
             services.AddHttpClient<ICurrencyService, CurrencyService>();
 
+            // Audit Service
+            services.AddScoped<IAuditService, AuditService>();
+
 
 
             return services;

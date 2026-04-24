@@ -1,3 +1,4 @@
+using System.Text.Json;
 using BudgetFlow.Application.Common.Exceptions;
 using BudgetFlow.Application.Common.Interfaces;
 using BudgetFlow.Domain.Entities;
@@ -12,12 +13,14 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.CreateExpense
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
         private readonly ICurrencyService _currencyService;
+        private readonly IAuditService _auditService;
 
-        public CreateExpenseCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService, ICurrencyService currencyService)
+        public CreateExpenseCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService, ICurrencyService currencyService, IAuditService auditService)
         {
             _context = context;
             _currentUserService = currentUserService;
             _currencyService = currencyService;
+            _auditService = auditService;
         }
 
         public async Task<CreateExpenseResult> Handle(CreateExpenseCommand request, CancellationToken cancellationToken)
@@ -52,6 +55,19 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.CreateExpense
 
             _context.Expenses.Add(expense);
             await _context.SaveChangesAsync(cancellationToken);
+
+            await _auditService.LogAsync(
+                action: "CreateExpense",
+                entityName: "Expense",
+                newValues: JsonSerializer.Serialize(new
+                {
+                    expense.Id,
+                    expense.Title,
+                    expense.Amount,
+                    expense.Currency
+                }),
+                cancellationToken: cancellationToken
+            );
 
             return new CreateExpenseResult
             (

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using BudgetFlow.Application.Common.Exceptions;
 using BudgetFlow.Application.Common.Interfaces;
 using BudgetFlow.Domain.Enums;
@@ -10,10 +11,12 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.ReviewExpense
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
-        public ReviewExpenseCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService)
+        private readonly IAuditService _auditService;
+        public ReviewExpenseCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService, IAuditService auditService)
         {
             _context = context;
             _currentUserService = currentUserService;
+            _auditService = auditService;
         }
 
         public async Task<ReviewExpenseResponse> Handle(ReviewExpenseCommand request, CancellationToken cancellationToken)
@@ -32,6 +35,8 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.ReviewExpense
 
             if (role == "Finance" && expense.Status != ExpenseStatus.ApprovedByManager)
                 throw new ForbiddenException("This expense must be approved by a manager first.");
+
+            var previousStatus = expense.Status;
 
             // Determining the new status based on the role and decision
             expense.Status = (role, request.IsApproved) switch
@@ -55,6 +60,14 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.ReviewExpense
 
             _context.Expenses.Update(expense);
             await _context.SaveChangesAsync(cancellationToken);
+
+            await _auditService.LogAsync(
+                action: request.IsApproved ? "ApproveExpense" : "RejectExpense",
+                entityName: "Expense",
+                oldValues: JsonSerializer.Serialize(new {Status = previousStatus.ToString() }),
+                newValues: JsonSerializer.Serialize(new {Status = expense.Status.ToString() }),
+                cancellationToken: cancellationToken
+            );
 
             return new ReviewExpenseResponse
             (
