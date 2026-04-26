@@ -3,6 +3,8 @@ using BudgetFlow.API.Services;
 using BudgetFlow.Application;
 using BudgetFlow.Application.Common.Interfaces;
 using BudgetFlow.Infrastructure.Extentions;
+using BudgetFlow.Infrastructure.Jobs;
+using Hangfire;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +39,15 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Hangfire Dashboard - Only TenantAdmin
+app.UseHangfireDashboard("/hangfire");
+
+// Make Monthly Report Job Start at the beginning of every month
+RecurringJob.AddOrUpdate<MonthlyReportJob>(
+    "monthly-budget-report",
+    job => job.ExecuteAsync(),
+    Cron.Monthly(1, 0));
 
 
 

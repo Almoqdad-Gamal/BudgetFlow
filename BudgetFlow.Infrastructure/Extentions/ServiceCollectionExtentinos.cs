@@ -1,8 +1,10 @@
 using System.Text;
 using BudgetFlow.Application.Common.Interfaces;
+using BudgetFlow.Infrastructure.Jobs;
 using BudgetFlow.Infrastructure.Persistence;
 using BudgetFlow.Infrastructure.Services;
 using BudgetFlow.Infrastructure.Settings;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -63,6 +65,27 @@ namespace BudgetFlow.Infrastructure.Extentions
 
             // Audit Service
             services.AddScoped<IAuditService, AuditService>();
+
+            // Email Settings
+            services.Configure<EmailSettings>(
+                configuration.GetSection("EmailSettings"));
+
+            // Email Service
+            services.AddScoped<IEmailService, EmailService>();
+
+            // PDF Service
+            services.AddScoped<IPdfReportService, PdfReportService>();
+
+            // Hangfire
+            services.AddHangfire(config =>
+                config.UseSqlServerStorage(
+                    configuration.GetConnectionString("HangfireConnection")));
+
+            services.AddHangfireServer();
+
+            // Monthly Report Job
+            services.AddScoped<MonthlyReportJob>();
+
 
 
 
