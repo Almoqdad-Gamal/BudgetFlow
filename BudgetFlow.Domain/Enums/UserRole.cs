@@ -4,7 +4,8 @@ namespace BudgetFlow.Domain.Enums
     {
         SuperAdmin = 0,
         TenantAdmin = 1,
-        Manager = 2,
-        Employee = 3
+        Finance = 2,
+        Manager = 3,
+        Employee = 4
     }
 }

@@ -1,5 +1,6 @@
 using System.Text;
 using BudgetFlow.Application.Common.Interfaces;
+using BudgetFlow.Application.Features.Expenses.Services;
 using BudgetFlow.Infrastructure.Jobs;
 using BudgetFlow.Infrastructure.Persistence;
 using BudgetFlow.Infrastructure.Services;
@@ -85,6 +86,9 @@ namespace BudgetFlow.Infrastructure.Extentions
 
             // Monthly Report Job
             services.AddScoped<MonthlyReportJob>();
+
+            // Budget alert
+            services.AddScoped<BudgetAlertService>();
 
 
 

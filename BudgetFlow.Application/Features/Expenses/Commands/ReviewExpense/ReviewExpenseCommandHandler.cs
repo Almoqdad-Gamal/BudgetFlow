@@ -1,6 +1,7 @@
 using System.Text.Json;
 using BudgetFlow.Application.Common.Exceptions;
 using BudgetFlow.Application.Common.Interfaces;
+using BudgetFlow.Application.Features.Expenses.Services;
 using BudgetFlow.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -12,11 +13,13 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.ReviewExpense
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
         private readonly IAuditService _auditService;
-        public ReviewExpenseCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService, IAuditService auditService)
+        private readonly BudgetAlertService _budgetAlertService;
+        public ReviewExpenseCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService, IAuditService auditService, BudgetAlertService budgetAlertService)
         {
             _context = context;
             _currentUserService = currentUserService;
             _auditService = auditService;
+            _budgetAlertService = budgetAlertService;
         }
 
         public async Task<ReviewExpenseResponse> Handle(ReviewExpenseCommand request, CancellationToken cancellationToken)
@@ -68,6 +71,9 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.ReviewExpense
                 newValues: JsonSerializer.Serialize(new {Status = expense.Status.ToString() }),
                 cancellationToken: cancellationToken
             );
+
+            if (role == "Finance" && request.IsApproved)
+                await _budgetAlertService.CheckAndSendAlertAsync(expense, cancellationToken);
 
             return new ReviewExpenseResponse
             (
