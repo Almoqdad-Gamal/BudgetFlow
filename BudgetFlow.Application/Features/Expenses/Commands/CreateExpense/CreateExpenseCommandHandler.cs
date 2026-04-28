@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BudgetFlow.Application.Features.Expenses.Commands.CreateExpense
 {
-    public class CreateExpenseCommandHandler : IRequestHandler<CreateExpenseCommand, CreateExpenseResult>
+    public class CreateExpenseCommandHandler : IRequestHandler<CreateExpenseCommand, CreateExpenseResponse>
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
@@ -23,7 +23,7 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.CreateExpense
             _auditService = auditService;
         }
 
-        public async Task<CreateExpenseResult> Handle(CreateExpenseCommand request, CancellationToken cancellationToken)
+        public async Task<CreateExpenseResponse> Handle(CreateExpenseCommand request, CancellationToken cancellationToken)
         {
             var tenantId = _currentUserService.TenantId;
             var userId = _currentUserService.UserId;
@@ -33,6 +33,16 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.CreateExpense
 
             if(department is null)
                 throw new NotFoundException("Department", request.DepartmentId);
+
+            // Get tenant to check the plan
+            var tenant = await _context.Tenants
+                .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+
+            // Multi-Currency only in pro plan
+            // Free plan only use USD
+            if(tenant!.Plan == SubscriptionPlan.Free && request.Currency != "USD")
+                throw new ForbiddenException("Multi-currency support is available on the pro plan only." + 
+                "Please upgrade or submit expenses in USD");
 
             var amountInBase = await _currencyService.ConvertAsync(
                 request.Amount,
@@ -69,7 +79,7 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.CreateExpense
                 cancellationToken: cancellationToken
             );
 
-            return new CreateExpenseResult
+            return new CreateExpenseResponse
             (
                 expense.Id,
                 expense.Title,

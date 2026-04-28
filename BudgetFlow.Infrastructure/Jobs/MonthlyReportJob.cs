@@ -1,4 +1,5 @@
 using BudgetFlow.Application.Common.Interfaces;
+using BudgetFlow.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -29,7 +30,7 @@ namespace BudgetFlow.Infrastructure.Jobs
 
             // Get all active tenants
             var tenants = await _context.Tenants
-                .Where(t => t.IsActive)
+                .Where(t => t.IsActive && t.Plan == SubscriptionPlan.Pro)
                 .Include(t => t.Users)
                 .ToListAsync();
 

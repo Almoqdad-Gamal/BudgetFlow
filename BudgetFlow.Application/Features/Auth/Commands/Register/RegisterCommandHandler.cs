@@ -1,6 +1,7 @@
 using BudgetFlow.Application.Common.Exceptions;
 using BudgetFlow.Application.Common.Interfaces;
 using BudgetFlow.Domain.Entities;
+using BudgetFlow.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,6 +33,7 @@ namespace BudgetFlow.Application.Features.Auth.Commands.Register
                 Name = request.TenantName,
                 Subdomain = request.Subdomain.ToLower(),
                 IsActive = true,
+                Plan = SubscriptionPlan.Free,
                 MaxDepartments = 2,
                 MaxUsers = 5
             };

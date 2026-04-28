@@ -1,4 +1,5 @@
 using BudgetFlow.Domain.Entities;
+using BudgetFlow.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -23,6 +24,10 @@ namespace BudgetFlow.Infrastructure.Persistence.Configurations
 
             builder.Property(t => t.IsActive)
                 .HasDefaultValue(true);
+
+            builder.Property(t => t.Plan)
+                .HasConversion<string>()
+                .HasDefaultValue(SubscriptionPlan.Free);
         }
     }
 }

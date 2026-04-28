@@ -9,14 +9,7 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.CreateExpense
         string Currency,
         Guid DepartmentId,
         string? Notes
-    ) : IRequest<CreateExpenseResult>;
+    ) : IRequest<CreateExpenseResponse>;
 
-    public record CreateExpenseResult
-    (
-        Guid ExpenseId,
-        string Title,
-        decimal Amount,
-        string Status
-    );
     
 }

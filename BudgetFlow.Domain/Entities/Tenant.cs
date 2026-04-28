@@ -1,4 +1,5 @@
 using BudgetFlow.Domain.Common;
+using BudgetFlow.Domain.Enums;
 
 namespace BudgetFlow.Domain.Entities
 {
@@ -9,6 +10,7 @@ namespace BudgetFlow.Domain.Entities
         public bool IsActive { get; set; } = true;
         public int MaxDepartments { get; set; }
         public int MaxUsers { get; set; }
+        public SubscriptionPlan Plan { get; set; } = SubscriptionPlan.Free;
 
         // Navigation properties
         public ICollection<Department> Departments { get; set; } = new List<Department>();
