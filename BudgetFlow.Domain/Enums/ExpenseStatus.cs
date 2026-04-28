@@ -4,7 +4,7 @@ namespace BudgetFlow.Domain.Enums
     {
         Pending = 0,
         ApprovedByManager = 1,
-        RejectedBuManager = 2,
+        RejectedByManager = 2,
         ApprovedByFinance = 3,
         RejectedByFinance = 4
     }

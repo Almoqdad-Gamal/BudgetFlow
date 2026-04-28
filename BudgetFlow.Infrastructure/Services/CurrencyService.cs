@@ -2,6 +2,7 @@ using System.Text.Json;
 using BudgetFlow.Application.Common.Interfaces;
 using BudgetFlow.Infrastructure.Settings;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace BudgetFlow.Infrastructure.Services
 {
@@ -16,10 +17,10 @@ namespace BudgetFlow.Infrastructure.Services
         private readonly Dictionary<string, (decimal Rate, DateTime CachedAt)> _cache = new();
         private readonly TimeSpan _cacheDuration = TimeSpan.FromHours(1);
 
-        public CurrencyService(HttpClient httpClient, CurrencySettings settings, ILogger<CurrencyService> logger)
+        public CurrencyService(HttpClient httpClient, IOptions<CurrencySettings> settings, ILogger<CurrencyService> logger)
         {
             _httpClient = httpClient;
-            _settings = settings;
+            _settings = settings.Value;
             _logger = logger;
         }
 

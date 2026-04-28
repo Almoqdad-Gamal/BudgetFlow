@@ -33,10 +33,10 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.ReviewExpense
             if(expense is null)
                 throw new NotFoundException("Expense", request.ExpenseId);
 
-            if(role == "Manager" && expense.Status != ExpenseStatus.Pending)
+            if(role == nameof(UserRole.Manager) && expense.Status != ExpenseStatus.Pending)
                 throw new ForbiddenException("This expense is not pending manager review.");
 
-            if (role == "Finance" && expense.Status != ExpenseStatus.ApprovedByManager)
+            if (role == nameof(UserRole.Finance) && expense.Status != ExpenseStatus.ApprovedByManager)
                 throw new ForbiddenException("This expense must be approved by a manager first.");
 
             var previousStatus = expense.Status;
@@ -45,7 +45,7 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.ReviewExpense
             expense.Status = (role, request.IsApproved) switch
             {
                 ("Manager", true) => ExpenseStatus.ApprovedByManager,
-                ("Manager", false) => ExpenseStatus.RejectedBuManager,
+                ("Manager", false) => ExpenseStatus.RejectedByManager,
                 ("Finance", true) => ExpenseStatus.ApprovedByFinance,
                 ("Finance", false) => ExpenseStatus.RejectedByFinance,
                 _ => throw new ForbiddenException("Only Managers and Finance can review expense.")
@@ -58,7 +58,7 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.ReviewExpense
                 expense.RejectionReason = request.RejectedReason;
             
             // If the Finance approves, update the BudgetPeriod
-            if (role == "Finance" && request.IsApproved)
+            if (role == nameof(UserRole.Finance) && request.IsApproved)
                 await UpdateBudgetPeriodAsync(expense, cancellationToken);
 
             _context.Expenses.Update(expense);
@@ -72,7 +72,7 @@ namespace BudgetFlow.Application.Features.Expenses.Commands.ReviewExpense
                 cancellationToken: cancellationToken
             );
 
-            if (role == "Finance" && request.IsApproved)
+            if (role == nameof(UserRole.Finance) && request.IsApproved)
                 await _budgetAlertService.CheckAndSendAlertAsync(expense, cancellationToken);
 
             return new ReviewExpenseResponse

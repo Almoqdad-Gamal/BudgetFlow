@@ -3,6 +3,7 @@ using BudgetFlow.Infrastructure.Settings;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MimeKit;
 
 namespace BudgetFlow.Infrastructure.Services
@@ -11,9 +12,9 @@ namespace BudgetFlow.Infrastructure.Services
     {
         private readonly EmailSettings _settings;
         private readonly ILogger<EmailService> _logger;
-        public EmailService(EmailSettings settings, ILogger<EmailService> logger)
+        public EmailService(IOptions<EmailSettings> settings, ILogger<EmailService> logger)
         {
-            _settings = settings;
+            _settings = settings.Value;
             _logger = logger;
         }
 
