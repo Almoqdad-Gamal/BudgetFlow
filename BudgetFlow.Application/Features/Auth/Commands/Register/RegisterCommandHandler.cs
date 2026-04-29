@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BudgetFlow.Application.Features.Auth.Commands.Register
 {
-    public class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterResult>
+    public class RegisterCommandHandler : IRequestHandler<RegisterCommand, RegisterResponse>
     {
         private readonly IApplicationDbContext _context;
         private readonly IJwtService _jwtService;
@@ -18,7 +18,7 @@ namespace BudgetFlow.Application.Features.Auth.Commands.Register
             _jwtService = jwtService;
         }
 
-        public async Task<RegisterResult> Handle(RegisterCommand request, CancellationToken cancellationToken)
+        public async Task<RegisterResponse> Handle(RegisterCommand request, CancellationToken cancellationToken)
         {
             var subdomainExists = await _context.Tenants
                 .Where(t => t.Subdomain == request.Subdomain)
@@ -61,7 +61,7 @@ namespace BudgetFlow.Application.Features.Auth.Commands.Register
             var token = _jwtService.GenerateToken(user);
             var refreshToken = _jwtService.GenerateRefreshToken();
 
-            return new RegisterResult(tenant.Id, user.Id, token, refreshToken);
+            return new RegisterResponse(tenant.Id, user.Id, token, refreshToken);
         }
     }
 }

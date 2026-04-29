@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BudgetFlow.Application.Features.Departments.Commands.UpdateDepartment
 {
-    public class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepartmentCommand, UpdateDepartmentResult>
+    public class UpdateDepartmentCommandHandler : IRequestHandler<UpdateDepartmentCommand, UpdateDepartmentResponse>
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
@@ -15,7 +15,7 @@ namespace BudgetFlow.Application.Features.Departments.Commands.UpdateDepartment
             _currentUserService = currentUserService;
         }
 
-        public async Task<UpdateDepartmentResult> Handle(UpdateDepartmentCommand request, CancellationToken cancellationToken)
+        public async Task<UpdateDepartmentResponse> Handle(UpdateDepartmentCommand request, CancellationToken cancellationToken)
         {
             var tenantId = _currentUserService.TenantId;
 
@@ -46,7 +46,7 @@ namespace BudgetFlow.Application.Features.Departments.Commands.UpdateDepartment
             _context.Departments.Update(department);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new UpdateDepartmentResult
+            return new UpdateDepartmentResponse
             (
                 department.Id,
                 department.Name,

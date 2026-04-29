@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BudgetFlow.Application.Features.Auth.Commands.Login
 {
-    public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResult>
+    public class LoginCommandHandler : IRequestHandler<LoginCommand, LoginResponse>
     {
         private readonly IApplicationDbContext _context;
         private readonly IJwtService _jwtService;
@@ -16,7 +16,7 @@ namespace BudgetFlow.Application.Features.Auth.Commands.Login
             _jwtService = jwtService;
         }
 
-        public async Task<LoginResult> Handle(LoginCommand request, CancellationToken cancellationToken)
+        public async Task<LoginResponse> Handle(LoginCommand request, CancellationToken cancellationToken)
         {
             var tenant = await _context.Tenants
                 .Where(t => t.Subdomain == request.Subdomain && t.IsActive)
@@ -36,7 +36,7 @@ namespace BudgetFlow.Application.Features.Auth.Commands.Login
             var token = _jwtService.GenerateToken(user);
             var refreshToken = _jwtService.GenerateRefreshToken();
 
-            return new LoginResult
+            return new LoginResponse
             (
                 user.Id,
                 $"{user.FirstName} {user.LastName}",

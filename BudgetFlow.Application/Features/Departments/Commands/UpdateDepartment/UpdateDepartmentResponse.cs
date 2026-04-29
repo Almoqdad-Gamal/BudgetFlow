@@ -1,14 +1,10 @@
-using MediatR;
-
 namespace BudgetFlow.Application.Features.Departments.Commands.UpdateDepartment
 {
-    public record UpdateDepartmentCommand
+    public record UpdateDepartmentResponse
     (
-        Guid Id,
+        Guid DepartmentId,
         string Name,
         decimal BudgetLimit,
         string Currency
-    ) : IRequest<UpdateDepartmentResponse>;
-
-    
+    );
 }

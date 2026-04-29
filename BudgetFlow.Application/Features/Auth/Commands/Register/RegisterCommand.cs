@@ -10,13 +10,5 @@ namespace BudgetFlow.Application.Features.Auth.Commands.Register
         string LastName,
         string Email,
         string Password
-    ) : IRequest<RegisterResult>;
-
-    public record RegisterResult
-    (
-        Guid TenantId,
-        Guid UserId,
-        string Token,
-        string RefreshToken
-    );
+    ) : IRequest<RegisterResponse>;
 }

@@ -1,4 +1,5 @@
 using BudgetFlow.Application.Common.Interfaces;
+using BudgetFlow.Application.Features.Departments.DTOs;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 

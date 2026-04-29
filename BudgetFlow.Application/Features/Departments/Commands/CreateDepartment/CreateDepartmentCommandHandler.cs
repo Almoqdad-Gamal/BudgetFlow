@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BudgetFlow.Application.Features.Departments.Commands.CreateDepartment
 {
-    public class CreateDepartmentCommandHandler : IRequestHandler<CreateDepartmentCommand, CreateDepartmentResult>
+    public class CreateDepartmentCommandHandler : IRequestHandler<CreateDepartmentCommand, CreateDepartmentResponse>
     {
         private readonly IApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
@@ -17,7 +17,7 @@ namespace BudgetFlow.Application.Features.Departments.Commands.CreateDepartment
             _currentUserService = currentUserService;
         }
 
-        public async Task<CreateDepartmentResult> Handle(CreateDepartmentCommand request, CancellationToken cancellationToken)
+        public async Task<CreateDepartmentResponse> Handle(CreateDepartmentCommand request, CancellationToken cancellationToken)
         {
             var tenantId = _currentUserService.TenantId;
 
@@ -54,7 +54,7 @@ namespace BudgetFlow.Application.Features.Departments.Commands.CreateDepartment
             _context.Departments.Add(department);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new CreateDepartmentResult(
+            return new CreateDepartmentResponse(
                 department.Id,
                 department.Name,
                 department.BudgetLimit,
