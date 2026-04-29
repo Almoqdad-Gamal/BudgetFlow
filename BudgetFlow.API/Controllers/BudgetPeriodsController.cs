@@ -1,4 +1,5 @@
 using BudgetFlow.Application.Features.BudgetPeriods.Commands.CreateBudgetPeriod;
+using BudgetFlow.Application.Features.BudgetPeriods.Commands.UpdateBudgetPeriod;
 using BudgetFlow.Application.Features.BudgetPeriods.Queries.GetBudgetPeriods;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -31,6 +32,14 @@ namespace BudgetFlow.API.Controllers
             var result = await _sender.Send(
                 new GetBudgetPeriodsQuery(departmentId, month, year),
                 cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpPut]
+        [Authorize(Roles = "TenantAdmin,Finance")]
+        public async Task<IActionResult> UpdateBudgetPeriod(Guid id, [FromBody] UpdateBudgetPeriodCommand command, CancellationToken cancellationToken)
+        {
+            var result = await _sender.Send(command with {Id = id}, cancellationToken);
             return Ok(result);
         }
     }
