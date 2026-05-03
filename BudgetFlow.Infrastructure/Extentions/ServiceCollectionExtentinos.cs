@@ -80,7 +80,7 @@ namespace BudgetFlow.Infrastructure.Extentions
             // Hangfire
             services.AddHangfire(config =>
                 config.UseSqlServerStorage(
-                    configuration.GetConnectionString("HangfireConnection")));
+                    configuration["HangfireSettings:ConnectionString"]));
 
             services.AddHangfireServer();
 
@@ -89,6 +89,13 @@ namespace BudgetFlow.Infrastructure.Extentions
 
             // Budget alert
             services.AddScoped<BudgetAlertService>();
+
+            // Stripe Settings
+            services.Configure<StripeSettings>(
+                configuration.GetSection("StripeSettings"));
+
+            // Subscription Services
+            services.AddScoped<ISubscriptionService, SubscriptionService>();
 
 
 
