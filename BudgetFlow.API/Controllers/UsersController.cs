@@ -1,4 +1,5 @@
 using BudgetFlow.Application.Features.Users.Commands.AddUser;
+using BudgetFlow.Application.Features.Users.Commands.DeactivateUser;
 using BudgetFlow.Application.Features.Users.Queries.GetUsers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -30,6 +31,13 @@ namespace BudgetFlow.API.Controllers
         public async Task<IActionResult> GetUsers(CancellationToken cancellationToken)
         {
             var result = await _sender.Send(new GetUsersQuery(), cancellationToken);
+            return Ok(result);
+        }
+        [HttpPatch("{id:guid}/deactivate")]
+        [Authorize(Roles = "TenantAdmin")]
+        public async Task<IActionResult> DeactivateUser(Guid id, CancellationToken cancellationToken)
+        {
+            var result = await _sender.Send(new DeactivateUserCommand(id), cancellationToken);
             return Ok(result);
         }
     }
