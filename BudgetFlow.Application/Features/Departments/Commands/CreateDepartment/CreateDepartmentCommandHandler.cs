@@ -1,6 +1,7 @@
 using BudgetFlow.Application.Common.Exceptions;
 using BudgetFlow.Application.Common.Interfaces;
 using BudgetFlow.Domain.Entities;
+using BudgetFlow.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -42,6 +43,9 @@ namespace BudgetFlow.Application.Features.Departments.Commands.CreateDepartment
 
             if(DepartmentCount >= tenant!.MaxDepartments)
                 throw new ForbiddenException($"You have reached the maximum number of departments ({tenant.MaxDepartments}) for your plan.");
+
+            if(tenant!.Plan == SubscriptionPlan.Free && request.Currency != "USD")
+                throw new ForbiddenException("Custom currency is available on the Pro plan only.");
 
             var department = new Department
             {

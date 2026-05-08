@@ -1,5 +1,6 @@
 using BudgetFlow.Application.Common.Exceptions;
 using BudgetFlow.Application.Common.Interfaces;
+using BudgetFlow.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,6 +39,26 @@ namespace BudgetFlow.Application.Features.Departments.Commands.UpdateDepartment
                             "Name", "A department with this name already exists.")
                     ]);
             }
+
+            var tenant = await _context.Tenants
+                .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+
+            if(department.Currency != request.Currency)
+            {
+                if(tenant!.Plan == SubscriptionPlan.Free )
+                    throw new ForbiddenException("Changing department currency is available on the Pro plan only.");
+
+                var hasExpenses = await _context.Expenses
+                    .AnyAsync(e => e.DepartmentId == request.Id, cancellationToken);
+                
+                if(hasExpenses)
+                    throw new ValidationException([
+                        new FluentValidation.Results.ValidationFailure(
+                            "Currency",
+                            "Cannot change currency after expenses have been submitted."
+                        )]);
+            }
+            
 
             department.Name = request.Name;
             department.BudgetLimit = request.BudgetLimit;
