@@ -43,7 +43,7 @@ namespace BudgetFlow.Application.Features.Departments.Commands.UpdateDepartment
             var tenant = await _context.Tenants
                 .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
 
-            if(department.Currency != request.Currency)
+            if(department.Currency != request.Currency.ToUpper())
             {
                 if(tenant!.Plan == SubscriptionPlan.Free )
                     throw new ForbiddenException("Changing department currency is available on the Pro plan only.");
@@ -62,7 +62,7 @@ namespace BudgetFlow.Application.Features.Departments.Commands.UpdateDepartment
 
             department.Name = request.Name;
             department.BudgetLimit = request.BudgetLimit;
-            department.Currency = request.Currency;
+            department.Currency = request.Currency.ToUpper();
 
             _context.Departments.Update(department);
             await _context.SaveChangesAsync(cancellationToken);

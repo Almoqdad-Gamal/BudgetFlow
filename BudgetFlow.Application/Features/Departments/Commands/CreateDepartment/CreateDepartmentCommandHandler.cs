@@ -44,14 +44,14 @@ namespace BudgetFlow.Application.Features.Departments.Commands.CreateDepartment
             if(DepartmentCount >= tenant!.MaxDepartments)
                 throw new ForbiddenException($"You have reached the maximum number of departments ({tenant.MaxDepartments}) for your plan.");
 
-            if(tenant!.Plan == SubscriptionPlan.Free && request.Currency != "USD")
+            if(tenant!.Plan == SubscriptionPlan.Free && !request.Currency.Equals("USD", StringComparison.CurrentCultureIgnoreCase))
                 throw new ForbiddenException("Custom currency is available on the Pro plan only.");
 
             var department = new Department
             {
                 Name = request.Name,
                 BudgetLimit = request.BudgetLimit,
-                Currency = request.Currency,
+                Currency = request.Currency.ToUpper(),
                 TenantId = tenantId
             };
 
