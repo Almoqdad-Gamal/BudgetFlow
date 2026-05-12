@@ -19,7 +19,7 @@ namespace BudgetFlow.Infrastructure.Services
         {
             var options = new SessionCreateOptions
             {
-                Mode = "Subscription",
+                Mode = "subscription",
 
                 CustomerEmail = tenantEmail,
 
