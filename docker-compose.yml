@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: budgetflow-api
+    ports:
+      - "5261:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=BudgetFlowDb;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
+      - ConnectionStrings__HangfireConnection=Server=sqlserver,1433;Database=BudgetFlowHangfire;User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
+      - JwtSettings__SecretKey=${JWT_SECRET_KEY}
+      - JwtSettings__Issuer=BudgetFlow
+      - JwtSettings__Audience=BudgetFlowUsers
+      - JwtSettings__ExpiryInMinutes=60
+      - JwtSettings__RefreshTokenExpiryInDays=7
+      - CurrencySettings__BaseUrl=https://api.frankfurter.app
+      - CurrencySettings__BaseCurrency=USD
+      - StripeSettings__SecretKey=${STRIPE_SECRET_KEY}
+      - StripeSettings__WebhookSecret=${STRIPE_WEBHOOK_SECRET}
+      - StripeSettings__ProPlanPriceId=${STRIPE_PRO_PLAN_PRICE_ID}
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - budgetflow-network
+    restart: always
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: budgetflow-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${SA_PASSWORD}
+      - MSSQL_PID=Express
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${SA_PASSWORD} -Q 'SELECT 1' -No"]
+      interval: 10s
+      timeout: 5s
+      retries: 10  
+      start_period: 30s
+    ports:
+      - "1434:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - budgetflow-network
+
+networks:
+  budgetflow-network:
+    driver: bridge
+
+volumes:
+  sqlserver-data:

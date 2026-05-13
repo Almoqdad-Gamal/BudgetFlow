@@ -7,6 +7,7 @@ using BudgetFlow.Infrastructure.Services;
 using BudgetFlow.Infrastructure.Settings;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +19,12 @@ namespace BudgetFlow.Infrastructure.Extentions
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            // Database 
+            var defaultConnection = configuration.GetConnectionString("DefaultConnection")!;
+            var hangfireConnection = configuration.GetConnectionString("HangfireConnection")!;
+
+            EnsureDatabaseExists(defaultConnection);
+            EnsureDatabaseExists(hangfireConnection);
+                // Database 
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection")));
 
@@ -80,7 +86,8 @@ namespace BudgetFlow.Infrastructure.Extentions
             // Hangfire
             services.AddHangfire(config =>
                 config.UseSqlServerStorage(
-                    configuration["HangfireSettings:ConnectionString"]));
+                    configuration.GetConnectionString("HangfireConnection")));
+                    
 
             services.AddHangfireServer();
 
@@ -102,5 +109,33 @@ namespace BudgetFlow.Infrastructure.Extentions
 
             return services;
         }
+
+        private static void EnsureDatabaseExists(string connectionString)
+    {
+        try
+        {
+            var builder = new SqlConnectionStringBuilder(connectionString);
+            var databaseName = builder.InitialCatalog;
+            
+            builder.InitialCatalog = "master";
+            
+            using var connection = new SqlConnection(builder.ConnectionString);
+            connection.Open();
+
+            var sql = $@"
+                IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = '{databaseName}')
+                BEGIN
+                    CREATE DATABASE [{databaseName}];
+                END";
+
+            using var command = new SqlCommand(sql, connection);
+            command.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Database Setup] Error checking/creating database: {ex.Message}");
+            throw; 
+        }
+    }
     }
 }

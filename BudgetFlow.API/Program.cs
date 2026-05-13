@@ -74,10 +74,13 @@ app.MapControllers();
 app.UseHangfireDashboard("/hangfire");
 
 // Make Monthly Report Job Start at the beginning of every month
-RecurringJob.AddOrUpdate<MonthlyReportJob>(
-    "monthly-budget-report",
-    job => job.ExecuteAsync(),
-    Cron.Monthly(1, 0));
+using (var scope = app.Services.CreateScope())
+{
+    RecurringJob.AddOrUpdate<MonthlyReportJob>(
+        "monthly-budget-report",
+        job => job.ExecuteAsync(),
+        Cron.Monthly(1, 0));
+}
 
 
 
